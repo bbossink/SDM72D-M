@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Modified sdm120c.py script for use with SDM72D-m Eastron meter
+# Modified sdm120c.py script for use with SDM72D-M Eastron meter
 
 import minimalmodbus
 
