@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# Modified sdm120c.py script for use with SDM72D-m Eastron meter
 
 import minimalmodbus
 
@@ -10,7 +11,9 @@ rs485.serial.stopbits = 1
 rs485.serial.timeout = 1
 rs485.debug = False
 rs485.mode = minimalmodbus.MODE_RTU
-print rs485
+
+# Uncomment below line to print some rs485 parameters during script execution
+# print rs485
 
 Total_System_Power = rs485.read_float(52, functioncode=4, numberOfRegisters=2)
 Import_Power = rs485.read_float(1280, functioncode=4, numberOfRegisters=2)
