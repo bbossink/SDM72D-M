@@ -51,7 +51,7 @@ extern "C" {
 #include <modbus-version.h>
 #include <modbus.h>
 
-#define DEFAULT_RATE 2400
+#define DEFAULT_RATE 9600
 
 #define MODEL_120 1
 #define MODEL_220 2
@@ -59,7 +59,7 @@ extern "C" {
 // Read
 #define VOLTAGE   0x0000
 #define CURRENT   0x0006
-#define POWER     0x000C
+#define POWER     0x0034
 #define APOWER    0x0012
 #define RAPOWER   0x0018
 #define PFACTOR   0x001E
