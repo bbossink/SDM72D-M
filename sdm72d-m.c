@@ -3,12 +3,15 @@ extern "C" {
 #endif
 
 /*
- * sdm120c: ModBus RTU client to read EASTRON SDM120C smart mini power meter registers
+ * sdm72d-m.c: ModBus RTU client to read EASTRON SDM72D-M 3 phase power meter registers
+ *
+ * Original code for reading SDM120C forked from Gianfranco
  *
  * Copyright (C) 2015 Gianfranco Di Prinzio <gianfrdp@inwind.it>
  * 
  * Locking code partially from aurora by Curtronis.
  * Some code by TheDrake too. :)  
+ * Modified for use with SDM72D-M by bbossink
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,20 +60,22 @@ extern "C" {
 #define MODEL_220 2
 
 // Read
-#define VOLTAGE   0x0000
-#define CURRENT   0x0006
-#define POWER     0x0034
-#define APOWER    0x0012
-#define RAPOWER   0x0018
-#define PFACTOR   0x001E
-#define PANGLE    0x0024
-#define FREQUENCY 0x0046
-#define IAENERGY  0x0048
-#define EAENERGY  0x004A
-#define IRAENERGY 0x004C
-#define ERAENERGY 0x004E
-#define TAENERGY  0x0156
-#define TRENERGY  0x0158
+// #define VOLTAGE   0x0000
+// #define CURRENT   0x0006
+#define POWER     0x0034	// Total system power
+#define IPOWER    0x0500	// Import power
+#define EPOWER    0x0502	// Export power
+// #define APOWER    0x0012
+// #define RAPOWER   0x0018
+// #define PFACTOR   0x001E
+// #define PANGLE    0x0024
+// #define FREQUENCY 0x0046
+#define IAENERGY  0x0048	// Import Wh since last reset
+#define EAENERGY  0x004A	// Export Wh since last reset
+// #define IRAENERGY 0x004C
+// #define ERAENERGY 0x004E
+#define TAENERGY  0x0156	// Total Kwh
+// #define TRENERGY  0x0158
 
 // Write
 #define NPARSTOP  0x0012
@@ -123,9 +128,10 @@ char *devLCKfile = NULL;
 char *devLCKfileNew = NULL;
 
 void usage(char* program) {
-    printf("sdm120c %s: ModBus RTU client to read EASTRON SDM120C smart mini power meter registers\n",version);
-    printf("Copyright (C) 2015 Gianfranco Di Prinzio <gianfrdp@inwind.it>\n");
-    printf("Complied with libmodbus %s\n\n", LIBMODBUS_VERSION_STRING);
+    printf("sdm72d-m %s: ModBus RTU client to read EASTRON SDM72D-M power meter registers\n",version);
+    printf("sdm120c source code copyright (C) 2015 by Gianfranco Di Prinzio <gianfrdp@inwind.it>\n");
+    printf("source code modification for SDM72D-M compatibilty by bbossink <https://github.com/bbossink>\n");
+    printf("Compiled with libmodbus %s\n\n", LIBMODBUS_VERSION_STRING);
     printf("Usage: %s [-a address] [-d n] [-x] [-p] [-v] [-c] [-e] [-i] [-t] [-f] [-g] [-T] [[-m]|[-q]] [-b baud_rate] [-P parity] [-S bit] [-z num_retries] [-j seconds] [-w seconds] [-1 | -2] device\n", program);
     printf("       %s [-a address] [-d n] [-x] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] [-z num_retries] [-j seconds] [-w seconds] -s new_address device\n", program);
     printf("       %s [-a address] [-d n] [-x] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] [-z num_retries] [-j seconds] [-w seconds] -r baud_rate device \n", program);
@@ -138,26 +144,26 @@ void usage(char* program) {
     printf("Connection parameters:\n");
     printf("\t-a address \tMeter number (1-247). Default: 1\n");
     printf("\t-b baud_rate \tUse baud_rate serial port speed (1200, 2400, 4800, 9600)\n");
-    printf("\t\t\tDefault: 2400\n");
+    printf("\t\t\tDefault: 9600\n");
     printf("\t-P parity \tUse parity (E, N, O)\n");
     printf("\t-S bit \t\tUse stop bits (1, 2). Default: 1\n");
-    printf("\t-1 \t\tModel: SDM120C (default)\n");
-    printf("\t-2 \t\tModel: SDM220\n");
     printf("Reading parameters (no parameter = retrieves all values):\n");
-    printf("\t-p \t\tGet power (W)\n");
-    printf("\t-v \t\tGet voltage (V)\n");
-    printf("\t-c \t\tGet current (A)\n");
-    printf("\t-l \t\tGet apparent power (VA)\n");
-    printf("\t-n \t\tGet reactive power (VAR)\n");
-    printf("\t-f \t\tGet frequency (Hz)\n");
-    printf("\t-o \t\tGet phase angle (Degree)\n");
-    printf("\t-g \t\tGet power factor\n");
-    printf("\t-i \t\tGet imported energy (Wh)\n");
-    printf("\t-e \t\tGet exported energy (Wh)\n");
-    printf("\t-t \t\tGet total energy (Wh)\n");
-    printf("\t-A \t\tGet imported reactive energy (VARh)\n");
-    printf("\t-B \t\tGet exported reactive energy (VARh)\n");
-    printf("\t-C \t\tGet total reactive energy (VARh)\n");
+    printf("\t-p \t\tGet current total system power (W)\n");
+    printf("\t-l \t\tGet current import power (W)\n");
+    printf("\t-n \t\tGet current export power (W)\n");
+//    printf("\t-v \t\tGet voltage (V)\n");
+//    printf("\t-c \t\tGet current (A)\n");
+//    printf("\t-l \t\tGet apparent power (VA)\n");
+//    printf("\t-n \t\tGet reactive power (VAR)\n");
+//    printf("\t-f \t\tGet frequency (Hz)\n");
+//    printf("\t-o \t\tGet phase angle (Degree)\n");
+//    printf("\t-g \t\tGet power factor\n");
+    printf("\t-i \t\tGet total imported power since last reset(Wh)\n");
+    printf("\t-e \t\tGet total exported power since last reset(Wh)\n");
+    printf("\t-t \t\tGet total power since last reset (Wh)\n");
+//    printf("\t-A \t\tGet imported reactive energy (VARh)\n");
+//    printf("\t-B \t\tGet exported reactive energy (VARh)\n");
+//    printf("\t-C \t\tGet total reactive energy (VARh)\n");
     printf("\t-T \t\tGet Time for rotating display values (0=no rotation)\n");
     printf("\t-m \t\tOutput values in IEC 62056 format ID(VALUE*UNIT)\n");
     printf("\t-q \t\tOutput values in compact mode\n");
