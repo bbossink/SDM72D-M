@@ -71,12 +71,12 @@ extern "C" {
 #define TAENERGY  0x0156	// Total Kwh since last reset -t
 
 // Write
-#define NPARSTOP  0x0012
-#define DEVICE_ID 0x0014
-#define BAUD_RATE 0x001C
+#define NPARSTOP  0x0012 // Parity Stop
+#define DEVICE_ID 0x0014 // Modbus address
+#define BAUD_RATE 0x001C // Network baud rate
 #define TIME_DISP_220 0xF500
-#define TIME_DISP 0xF900
-#define PULSE_OUT 0xF910
+#define TIME_DISP 0x003A // Time for scrolling display
+#define PULSE_OUT 0x0016 // Pulse 1 rate
 #define TOT_MODE  0xF920
 
 #define BR1200 5
