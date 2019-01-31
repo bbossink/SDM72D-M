@@ -62,19 +62,19 @@ extern "C" {
 // Read
 // #define VOLTAGE   0x0000
 // #define CURRENT   0x0006
-#define POWER     0x0034	// Total system power
-#define IPOWER    0x0500	// Import power
-#define EPOWER    0x0502	// Export power
+#define POWER     0x0034	// Total system power -p
+#define IPOWER    0x0500	// Import power -l
+#define EPOWER    0x0502	// Export power -n
 // #define APOWER    0x0012
 // #define RAPOWER   0x0018
 // #define PFACTOR   0x001E
 // #define PANGLE    0x0024
 // #define FREQUENCY 0x0046
-#define IAENERGY  0x0048	// Import Wh since last reset
-#define EAENERGY  0x004A	// Export Wh since last reset
+#define IAENERGY  0x0048	// Import Wh since last reset -i
+#define EAENERGY  0x004A	// Export Wh since last reset -e
 // #define IRAENERGY 0x004C
 // #define ERAENERGY 0x004E
-#define TAENERGY  0x0156	// Total Kwh
+#define TAENERGY  0x0156	// Total Kwh since last reset -t
 // #define TRENERGY  0x0158
 
 // Write
@@ -109,7 +109,7 @@ int trace_flag     = 0;
 
 int metern_flag    = 0;
 
-const char *version     = "1.3.5.4";
+const char *version     = "0.1a";
 char *programName;
 const char *ttyLCKloc   = "/var/lock/LCK.."; /* location and prefix of serial port lock file */
 
@@ -1026,19 +1026,11 @@ int main(int argc, char* argv[])
     int model          = MODEL_120;
     int new_address    = 0;
     int power_flag     = 0;
-    int volt_flag      = 0;
-    int current_flag   = 0;
-    int pangle_flag    = 0;
-    int freq_flag      = 0;
-    int pf_flag        = 0;
-    int apower_flag    = 0;
-    int rapower_flag   = 0;
+    int ipower_flag    = 0;
+    int epower_flag    = 0;
     int export_flag    = 0;
     int import_flag    = 0;
     int total_flag     = 0;
-    int rexport_flag   = 0;
-    int rimport_flag   = 0;
-    int rtotal_flag    = 0;
     int new_baud_rate  = -1;
     int new_parity_stop= -1;
     int compact_flag   = 0;
@@ -1105,20 +1097,10 @@ int main(int argc, char* argv[])
                 }
                 log_message(debug_flag | DEBUG_SYSLOG, "device_address = %d", device_address);
                 break;
-            case 'v':
-                volt_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "volt_flag = %d, count_param = %d", volt_flag, count_param);
-                break;
             case 'p':
                 power_flag = 1;
                 count_param++;
                 log_message(debug_flag | DEBUG_SYSLOG, "power_flag = %d, count_param = %d", power_flag, count_param);
-                break;
-            case 'c':
-                current_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "current_flag = %d, count_param = %d", current_flag, count_param);
                 break;
             case 'e':
                 export_flag = 1;
@@ -1135,44 +1117,14 @@ int main(int argc, char* argv[])
                 count_param++;
                 log_message(debug_flag | DEBUG_SYSLOG, "total_flag = %d, count_param = %d", total_flag, count_param);
                 break;
-            case 'A':
-                rimport_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "rimport_flag = %d, count_param = %d", rimport_flag, count_param);
-                break;
-            case 'B':
-                rexport_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "rexport_flag = %d, count_param = %d", rexport_flag, count_param);
-                break;
-            case 'C':
-                rtotal_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "rtotal_flag = %d, count_param = %d", rtotal_flag, count_param);
-                break;
-            case 'f':
-                freq_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "freq_flag = %d, count_param = %d", freq_flag, count_param);
-                break;
-            case 'g':
-                pf_flag = 1;
-                count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "pf_flag = %d, count_param = %d", pf_flag, count_param);
-                break;
             case 'l':
-                apower_flag = 1;
+                ipower_flag = 1;
                 count_param++;
-                log_message(debug_flag | DEBUG_SYSLOG, "apower_flag = %d, count_param = %d", apower_flag, count_param);
+                log_message(debug_flag | DEBUG_SYSLOG, "ipower_flag = %d, count_param = %d", ipower_flag, count_param);
                 break;
             case 'n':
-                rapower_flag = 1;
-                log_message(debug_flag | DEBUG_SYSLOG, "rapower_flag = %d, count_param = %d", rapower_flag, count_param);
-                count_param++;
-                break;
-            case 'o':
-                pangle_flag = 1;
-                log_message(debug_flag | DEBUG_SYSLOG, "pangle_flag = %d, count_param = %d", pangle_flag, count_param);
+                epower_flag = 1;
+                log_message(debug_flag | DEBUG_SYSLOG, "epower_flag = %d, count_param = %d", epower_flag, count_param);
                 count_param++;
                 break;
             case 'd':
@@ -1509,20 +1461,22 @@ int main(int argc, char* argv[])
 
     //log_message(debug_flag, "Flushed %d bytes", modbus_flush(ctx)); // Already flushed by connect 
 
-    float voltage     = 0;
-    float current     = 0;
+//    float voltage     = 0;
+//    float current     = 0;
     float power       = 0;
-    float apower      = 0;
-    float rapower     = 0;
-    float pf          = 0;
-    float pangle      = 0;
-    float freq        = 0;
+    float ipower      = 0;
+    float epower      = 0;
+//    float apower      = 0;
+//    float rapower     = 0;
+//    float pf          = 0;
+//    float pangle      = 0;
+//    float freq        = 0;
     float imp_energy  = 0;
     float exp_energy  = 0;
     float tot_energy  = 0;
-    float impr_energy = 0;
-    float expr_energy = 0;
-    float totr_energy = 0;
+//    float impr_energy = 0;
+//    float expr_energy = 0;
+//    float totr_energy = 0;
     int   time_disp   = 0;
 
     if (new_address > 0 && new_baud_rate > 0) {
@@ -1645,64 +1599,41 @@ int main(int argc, char* argv[])
         }
 
     } else if (power_flag   == 0 &&
-               apower_flag  == 0 &&
-               rapower_flag == 0 &&
-               volt_flag    == 0 &&
-               current_flag == 0 &&
-               pf_flag      == 0 &&
-               pangle_flag  == 0 &&
-               freq_flag    == 0 &&
+               ipower_flag  == 0 &&
+               epower_flag  == 0 &&
+//               apower_flag  == 0 &&
+//               rapower_flag == 0 &&
+//               volt_flag    == 0 &&
+//               current_flag == 0 &&
+//               pf_flag      == 0 &&
+//               pangle_flag  == 0 &&
+//               freq_flag    == 0 &&
                export_flag  == 0 &&
                import_flag  == 0 &&
                total_flag   == 0 &&
-               rexport_flag == 0 &&
-               rimport_flag == 0 &&
-               rtotal_flag  == 0 &&
+//               rexport_flag == 0 &&
+//               rimport_flag == 0 &&
+//               rtotal_flag  == 0 &&
                time_disp_flag == 0
        ) {
        // if no parameter, retrieve all values
         power_flag   = 1;
-        apower_flag  = 1;
-        rapower_flag = 1;
-        volt_flag    = 1;
-        current_flag = 1;
-        pangle_flag  = 1;
-        freq_flag    = 1;
-        pf_flag      = 1;
+		ipower_flag  = 1;
+		epower_flag  = 1;
+//        apower_flag  = 1;
+//        rapower_flag = 1;
+//        volt_flag    = 1;
+//        current_flag = 1;
+//        pangle_flag  = 1;
+//        freq_flag    = 1;
+//        pf_flag      = 1;
         export_flag  = 1;
         import_flag  = 1;
         total_flag   = 1;
-        rexport_flag  = 1;
-        rimport_flag  = 1;
-        rtotal_flag   = 1;
-        count_param  = power_flag + apower_flag + rapower_flag + volt_flag + 
-                       current_flag + pangle_flag + freq_flag + pf_flag + 
-                       export_flag + import_flag + total_flag +
-                       rexport_flag + rimport_flag + rtotal_flag;
-    }
-
-    if (volt_flag == 1) {
-        voltage = getMeasureFloat(ctx, VOLTAGE, num_retries, 2);
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_V(%3.2f*V)\n", device_address, voltage);
-        } else if (compact_flag == 1) {
-            printf("%3.2f ", voltage);
-        } else {
-            printf("Voltage: %3.2f V \n",voltage);
-        }
-    }
-
-    if (current_flag == 1) {
-        current  = getMeasureFloat(ctx, CURRENT, num_retries, 2);
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_C(%3.2f*A)\n", device_address, current);
-        } else if (compact_flag == 1) {
-            printf("%3.2f ", current);
-        } else {
-            printf("Current: %3.2f A \n",current);
-        }
+//        rexport_flag  = 1;
+//        rimport_flag  = 1;
+//        rtotal_flag   = 1;
+        count_param  = power_flag + ipower_flag + epower_flag + export_flag + import_flag + total_flag;
     }
 
     if (power_flag == 1) {
@@ -1713,67 +1644,31 @@ int main(int argc, char* argv[])
         } else if (compact_flag == 1) {
             printf("%3.2f ", power);
         } else {
-            printf("Power: %3.2f W \n", power);
+            printf("Current system power: %3.2f W \n", power);
         }
     }
 
-    if (apower_flag == 1) {
-        apower = getMeasureFloat(ctx, APOWER, num_retries, 2);
+        if (ipower_flag == 1) {
+        ipower = getMeasureFloat(ctx, IPOWER, num_retries, 2);
         read_count++;
         if (metern_flag == 1) {
-            printf("%d_VA(%3.2f*VA)\n", device_address, apower);
+            printf("%d_P(%3.2f*W)\n", device_address, ipower);
         } else if (compact_flag == 1) {
-            printf("%3.2f ", apower);
+            printf("%3.2f ", ipower);
         } else {
-            printf("Active Apparent Power: %3.2f VA \n", apower);
+            printf("Current import power: %3.2f W \n", ipower);
         }
     }
-
-    if (rapower_flag == 1) {
-        rapower = getMeasureFloat(ctx, RAPOWER, num_retries, 2);
+	
+	    if (epower_flag == 1) {
+        epower = getMeasureFloat(ctx, EPOWER, num_retries, 2);
         read_count++;
         if (metern_flag == 1) {
-            printf("%d_VAR(%3.2f*VAR)\n", device_address, rapower);
+            printf("%d_P(%3.2f*W)\n", device_address, epower);
         } else if (compact_flag == 1) {
-            printf("%3.2f ", rapower);
+            printf("%3.2f ", epower);
         } else {
-            printf("Reactive Apparent Power: %3.2f VAR \n", rapower);
-        }
-    }
-
-    if (pf_flag == 1) {
-        pf = getMeasureFloat(ctx, PFACTOR, num_retries, 2);
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_PF(%3.2f*F)\n", device_address, pf);
-        } else if (compact_flag == 1) {
-            printf("%3.2f ", pf);
-        } else {
-            printf("Power Factor: %3.2f \n", pf);
-        }
-    }
-
-    if (pangle_flag == 1) {
-        pangle = getMeasureFloat(ctx, PANGLE, num_retries, 2);
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_PA(%3.2f*Dg)\n", device_address, pangle);
-        } else if (compact_flag == 1) {
-            printf("%3.2f ", pangle);
-        } else {
-            printf("Phase Angle: %3.2f Degree \n", pangle);
-        }
-    }
-
-    if (freq_flag == 1) {
-        freq = getMeasureFloat(ctx, FREQUENCY, num_retries, 2);
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_F(%3.2f*Hz)\n", device_address, freq);
-        } else if (compact_flag == 1) {
-            printf("%3.2f ", freq);
-        } else {
-            printf("Frequency: %3.2f Hz \n", freq);
+            printf("Current export power: %3.2f W \n", epower);
         }
     }
 
@@ -1785,7 +1680,7 @@ int main(int argc, char* argv[])
         } else if (compact_flag == 1) {
             printf("%d ", (int)imp_energy);
         } else {
-            printf("Import Active Energy: %d Wh \n", (int)imp_energy);
+            printf("Imported Active Energy: %d Wh \n", (int)imp_energy);
         }
     }
 
@@ -1797,7 +1692,7 @@ int main(int argc, char* argv[])
         } else if (compact_flag == 1) {
             printf("%d ", (int)exp_energy);
         } else {
-            printf("Export Active Energy: %d Wh \n", (int)exp_energy);
+            printf("Exported Active Energy: %d Wh \n", (int)exp_energy);
         }
     }
 
@@ -1810,42 +1705,6 @@ int main(int argc, char* argv[])
             printf("%d ", (int)tot_energy);
         } else {
             printf("Total Active Energy: %d Wh \n", (int)tot_energy);
-        }
-    }
-
-    if (rimport_flag == 1) {
-        impr_energy = getMeasureFloat(ctx, IRAENERGY, num_retries, 2) * 1000;
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_IRE(%d*VARh)\n", device_address, (int)impr_energy);
-        } else if (compact_flag == 1) {
-            printf("%d ", (int)impr_energy);
-        } else {
-            printf("Import Reactive Energy: %d VARh \n", (int)impr_energy);
-        }
-    }
-
-    if (rexport_flag == 1) {
-        expr_energy = getMeasureFloat(ctx, ERAENERGY, num_retries, 2) * 1000;
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_ERE(%d*VARh)\n", device_address, (int)expr_energy);
-        } else if (compact_flag == 1) {
-            printf("%d ", (int)expr_energy);
-        } else {
-            printf("Export Reactive Energy: %d VARh \n", (int)expr_energy);
-        }
-    }
-
-    if (rtotal_flag == 1) {
-        totr_energy = getMeasureFloat(ctx, TRENERGY, num_retries, 2) * 1000;
-        read_count++;
-        if (metern_flag == 1) {
-            printf("%d_TRE(%d*VARh)\n", device_address, (int)totr_energy);
-        } else if (compact_flag == 1) {
-            printf("%d ", (int)totr_energy);
-        } else {
-            printf("Total Reactive Energy: %d VARh \n", (int)totr_energy);
         }
     }
 
