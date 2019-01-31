@@ -1,5 +1,5 @@
-# SDM120C
-SDM120C ModBus RTU client to read EASTRON SDM smart mini power meter registers
+# SDM72D-M
+SDM72D-M ModBus RTU client to read EASTRON SDM 3 phase smart power meter registers
 
 It depends on libmodbus (http://libmodbus.org)
 
@@ -13,10 +13,10 @@ To uninstall
   make uninstall
 
 <PRE>
-# SDM120C
-SDM120C ModBus RTU client to read EASTRON SDM120C smart mini power meter registers
+# SDM72D-M
+SDM72D-M ModBus RTU client to read EASTRON SDM72D-M 3 phase smart power meter registers
 
-It works with SDM120C and SDM220 models
+It works with SDM72D-M and SDM220 models
 
 It depends on libmodbus (http://libmodbus.org)
 
@@ -24,10 +24,10 @@ To compile and install
   make clean && make install
 
 <PRE>
-Usage: sdm120c [-a address] [-d] [-x] [-p] [-v] [-c] [-e] [-i] [-t] [-f] [-g] [-T] [[-m]|[-q]] [-b baud_rate] [-P parity] [-S bit] [-z num_retries] [-j seconds] [-w seconds] [-1 | -2] device
-       sdm120c [-a address] [-d] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] -s new_address device
-       sdm120c [-a address] [-d] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] -r baud_rate device 
-       sdm120c [-a address] [-d] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] -R new_time device
+Usage: sdm72d-m [-a address] [-d] [-x] [-p] [-v] [-c] [-e] [-i] [-t] [-f] [-g] [-T] [[-m]|[-q]] [-b baud_rate] [-P parity] [-S bit] [-z num_retries] [-j seconds] [-w seconds] [-1 | -2] device
+       sdm72d-m [-a address] [-d] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] -s new_address device
+       sdm72d-m [-a address] [-d] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] -r baud_rate device 
+       sdm72d-m [-a address] [-d] [-b baud_rate] [-P parity] [-S bit] [-1 | -2] -R new_time device
 
 where
     -a address     Meter number (between 1 and 247). Default: 1
@@ -56,7 +56,7 @@ where
     -j 1/10 secs   Response timeout. Default: 2=0.2s
     -D 1/1000 secs Delay before sending commands (wait line set). Default: 30=0.03s
     -w seconds     Time to wait to lock serial port. (1-30s) Default: 0s
-    -1             Model: SDM120C (default)
+    -1             Model: sdm72d-m (default)
     -2             Model: SDM220
     device         Serial device, i.e. /dev/ttyUSB0
 
