@@ -60,22 +60,15 @@ extern "C" {
 #define MODEL_220 2
 
 // Read
-// #define VOLTAGE   0x0000
-// #define CURRENT   0x0006
 #define POWER     0x0034	// Total system power -p
 #define IPOWER    0x0500	// Import power -l
 #define EPOWER    0x0502	// Export power -n
-// #define APOWER    0x0012
-// #define RAPOWER   0x0018
-// #define PFACTOR   0x001E
-// #define PANGLE    0x0024
-// #define FREQUENCY 0x0046
+// #define SPOWER     0x0180	// Settable total Wh 
+// #define SIPOWER     0x0184	// Settable import Wh
+// #define SEPOWER     0x0186	// Settable export Wh
 #define IAENERGY  0x0048	// Import Wh since last reset -i
 #define EAENERGY  0x004A	// Export Wh since last reset -e
-// #define IRAENERGY 0x004C
-// #define ERAENERGY 0x004E
 #define TAENERGY  0x0156	// Total Kwh since last reset -t
-// #define TRENERGY  0x0158
 
 // Write
 #define NPARSTOP  0x0012
@@ -128,8 +121,8 @@ char *devLCKfile = NULL;
 char *devLCKfileNew = NULL;
 
 void usage(char* program) {
-    printf("sdm72d-m %s: ModBus RTU client to read EASTRON SDM72D-M power meter registers\n",version);
-    printf("sdm120c source code copyright (C) 2015 by Gianfranco Di Prinzio <gianfrdp@inwind.it>\n");
+    printf("sdm72d-m %s: ModBus RTU client to read EASTRON SDM72D-M 3 phase power meter registers\n",version);
+    printf("original sdm120c source code copyright (C) 2015 by Gianfranco Di Prinzio <gianfrdp@inwind.it>\n");
     printf("source code modification for SDM72D-M compatibilty by bbossink <https://github.com/bbossink>\n");
     printf("Compiled with libmodbus %s\n\n", LIBMODBUS_VERSION_STRING);
     printf("Usage: %s [-a address] [-d n] [-x] [-p] [-v] [-c] [-e] [-i] [-t] [-f] [-g] [-T] [[-m]|[-q]] [-b baud_rate] [-P parity] [-S bit] [-z num_retries] [-j seconds] [-w seconds] [-1 | -2] device\n", program);
